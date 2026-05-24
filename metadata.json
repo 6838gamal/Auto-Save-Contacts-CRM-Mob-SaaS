@@ -1,0 +1,6 @@
+{
+  "name": "AutoSave Contacts CRM",
+  "description": "تطبيق متكامل لحفظ جهات الاتصال تلقائياً وبناء قاعدة بيانات عملاء ذكية بالخلفية للاتصالات، الرسائل، والواتساب.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

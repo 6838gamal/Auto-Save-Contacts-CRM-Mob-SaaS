@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AutoSave Contacts CRM</string>
+    <string name="app_name_ar">الحفظ التلقائي لجهات الاتصال</string>
+    
+    <!-- Drawer Navigation -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_contacts">جهات الاتصال المحفوظة</string>
+    <string name="nav_logs">سجل الاستماتة والعمليات</string>
+    <string name="nav_export">التصدير والنسخ الاحتياطي</string>
+    <string name="nav_settings">الإعدادات العامه</string>
+    <string name="nav_permissions">إدارة الصلاحيات والوصول</string>
+    <string name="nav_contact_dev">التواصل مع المطور</string>
+    <string name="nav_feedback">إرسال ملاحظات</string>
+    <string name="nav_privacy_policy">سياسة الخصوصية</string>
+    <string name="nav_version">الإصدار 1.0.0</string>
+
+    <!-- Home Dashboard -->
+    <string name="dashboard_title">لوحة التحكم السحابية المصغرة</string>
+    <string name="stat_saved_contacts">العملاء المحفوظين</string>
+    <string name="stat_total_logs">العمليات المرصودة</string>
+    <string name="stat_service_status">حالة الخدمة الخلفية</string>
+    <string name="status_running">نشط ويعمل بالخلفية</string>
+    <string name="status_stopped">متوقف حالياً</string>
+    
+    <!-- Service Control -->
+    <string name="btn_start_service">تفعيل الخدمة</string>
+    <string name="btn_stop_service">إيقاف الخدمة</string>
+    
+    <!-- Sub-status check cards -->
+    <string name="check_permissions">الصلاحيات الأساسية</string>
+    <string name="check_notification_access">الوصول للإشعارات (واتساب)</string>
+    <string name="check_accessibility">خدمة الوصول الذكية</string>
+    <string name="check_battery">تحسين استهلاك البطارية</string>
+    
+    <string name="state_granted">ممنوحة</string>
+    <string name="state_denied">مرفوضة / يتطلب تفعيل</string>
+    <string name="state_optimized">مفعل (قد يتوقف التطبيق)</string>
+    <string name="state_ignored">جاهز (يتم التجاهل)</string>
+    
+    <string name="last_saved_num_title">آخر رقم تم التقاطه وحفظه</string>
+    <string name="no_saved_contacts_yet">لا يوجد عملاء محفوظين بعد.</string>
+    <string name="no_logs_yet">السجل فارغ تماماً.</string>
+    
+    <!-- Saved Contacts Screen -->
+    <string name="search_hint">ابحث بالاسم أو الرقم...</string>
+    <string name="source_label">المصدر:</string>
+    <string name="date_saved_label">تاريخ الحفظ:</string>
+    <string name="last_activity_label">آخر نشاط:</string>
+    <string name="interactions_count_label">عدد التفاعلات:</string>
+    <string name="btn_edit_name">تعديل الاسم</string>
+    <string name="btn_delete_client">حذف من السجل</string>
+    <string name="dialog_edit_title">تعديل اسم العميل</string>
+    <string name="save_changes">حفظ التغييرات</string>
+    <string name="cancel">إلغاء</string>
+    <string name="client_name_placeholder">اسم العميل</string>
+    
+    <!-- Export Screen -->
+    <string name="export_title">تصدير قاعدة البيانات</string>
+    <string name="export_desc">يمكنك تصدير كافة جهات الاتصال التي تم التقاطها وبناؤها تلقائياً بواسطة التطبيق إلى ملف CSV متوافق بالكامل مع Excel باللغة العربية.</string>
+    <string name="btn_export_csv">تصدير بصيغة CSV (Excel)</string>
+    <string name="btn_export_xlsx">تصدير بصيغة Excel (تلقائي)</string>
+    <string name="export_success">تم تصدير الملف بنجاح وحفظه في التنزيلات</string>
+    <string name="export_failed">فشل التصدير، تأكد من منح صلاحيات التخزين إذا لزم الأمر</string>
+    <string name="share_file">مشاركة الملف المصدر</string>
+    
+    <!-- Permissions Screen -->
+    <string name="permissions_desc">يحتاج التطبيق إلى الصلاحيات التالية للعمل تلقائياً بالخلفية والتقاط أرقام الهواتف غير المحفوظة وحفظها مباشرة:</string>
+    <string name="perm_contacts_title">صلاحية جهات الاتصال</string>
+    <string name="perm_contacts_desc">قراءة وكتابة جهات الاتصال للتحقق من وجود الرقم وحفظه باسم تلقائي.</string>
+    <string name="perm_calls_title">صلاحية سجل المكالمات وحالة الهاتف</string>
+    <string name="perm_calls_desc">رصد المكالمات الواردة والصادرة لاستخراج الرقم عند انتهاء المكالمة.</string>
+    <string name="perm_sms_title">صلاحية الرسائل SMS</string>
+    <string name="perm_sms_desc">استقبال وقراءة الرسائل القصيرة لحفظ الأرقام المرسلة غير المسجلة.</string>
+    <string name="perm_notifications_title">الوصول إلى الإشعارات</string>
+    <string name="perm_notifications_desc">ضروري جداً لرصد رسائل WhatsApp الواردة واستخراج أرقام العملاء الجدد.</string>
+    <string name="perm_accessibility_title">خدمة إمكانية الوصول الذكية</string>
+    <string name="perm_accessibility_desc">تحسين دقة رصد الأرقام في الخلفية وضمان استمرارية الخدمة دون توقف.</string>
+    <string name="perm_battery_title">تحسين استهلاك البطارية</string>
+    <string name="perm_battery_desc">استبعاد التطبيق من تحسين البطارية لمنع نظام Android من إغلاقه بالخلفية.</string>
+    <string name="btn_request">طلب صلاحية</string>
+    <string name="system_active">مفعل في النظام</string>
+    
+    <!-- Logs Screen -->
+    <string name="btn_clear_logs">مسح السجل بالكامل</string>
+    <string name="log_source_call">مكالمة هاتفية</string>
+    <string name="log_source_sms">رسالة SMS</string>
+    <string name="log_source_whatsapp">واتساب</string>
+    <string name="log_status_success">تم الحفظ تلقائياً</string>
+    <string name="log_status_ignored">تم تجاهله (محفوظ مسبقاً)</string>
+    <string name="log_status_error">فشل الحفظ</string>
+    <string name="confirm_clear_logs">هل أنت متأكد من مسح جميع سجلات العمليات؟</string>
+    <string name="yes">نعم</string>
+    <string name="no">لا</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">إعادة ضبط النظام الذكي</string>
+    <string name="setting_auto_save_calls">تفعيل الحفظ التلقائي للمكالمات</string>
+    <string name="setting_auto_save_sms">تفعيل الحفظ التلقائي لرسائل SMS</string>
+    <string name="setting_auto_save_whatsapp">تفعيل الحفظ التلقائي لرسائل WhatsApp</string>
+    <string name="setting_prefix_title">البادئة التلقائية لأسماء العملاء</string>
+    <string name="setting_prefix_hint">مثال: عميل</string>
+    <string name="setting_theme">مظهر التطبيق</string>
+    <string name="theme_light">الوضع المضيء</string>
+    <string name="theme_dark">الوضع الليلي</string>
+    <string name="theme_system">افتراضي النظام</string>
+    
+    <!-- Notification Service Channels -->
+    <string name="foreground_service_channel_name">خدمة الحفظ التلقائي CRM</string>
+    <string name="foreground_service_channel_desc">مراقبة المكالمات والرسائل والواتساب بالخلفية</string>
+    <string name="foreground_service_title">مراقب العملاء الذكي نشط بالخلفية</string>
+    <string name="foreground_service_text">التطبيق يرصد الآن المكالمات والإشعارات الجديدة تلقائياً لبناء قاعدة البيانات.</string>
+    <string name="new_contact_saved_notif">تم رصد وحفظ عميل جديد: %1$s (%2$s)</string>
+    
+    <!-- Feedback & Dev Contacts Info -->
+    <string name="feedback_subject">ملاحظات حول تطبيق AutoSave Contacts CRM</string>
+    <string name="dev_email">applicationsdeveloper6838@gmail.com</string>
+    <string name="dev_contact_message">يمكنك التواصل مباشرة مع مهندس النظام ومطور التطبيق عبر البريد الإلكتروني أو مواقع التواصل لتطوير حلول برمجية مخصصة أو إرسال اقتراحاتك.</string>
+    <string name="btn_send_email">إرسال بريد إلكتروني</string>
+    <string name="dev_name">المهندس: جمال الحويش</string>
+    <string name="dev_title">مطور تطبيقات وحلول CRM الذكية</string>
+    <string name="link_linkedin">الملف المهني لينكد إن (LinkedIn)</string>
+    <string name="link_whatsapp">الواتساب المباشر (WhatsApp)</string>
+    <string name="link_telegram">قناة التيليجرام (Telegram)</string>
+    <string name="link_twitter">الحساب على تويتر / إكس (Twitter/X)</string>
+    <string name="link_instagram">الحساب على إنستغرام (Instagram)</string>
+    <string name="link_tiktok">قناة تيك توك للخدمات التقنية (TikTok)</string>
+    <string name="link_facebook">الصفحة الشخصية على فيسبوك (Facebook)</string>
+    <string name="privacy_title">سياسة الخصوصية وسرية البيانات</string>
+    <string name="privacy_desc">تطبيق AutoSave Contacts CRM يحترم خصوصيتك بالكامل. جميع عمليات فحص وحفظ المكالمات والرسائل تتم محلياً وتلقائياً بالكامل داخل جهازك دون إرسال أي بيانات أو أرقام لأي خادم خارجي. بيانات عملائك آمنة ومحلية 100٪.</string>
+
+    <!-- Generic notifications or texts -->
+    <string name="accessibility_active">خدمة الوصول الذكية قيد التشغيل والربط</string>
+    <string name="accessibility_inactive">خدمة الوصول معطلة حالياً</string>
+    
+    <!-- NEW STRING TO LOCALISE Compose hardcoded values -->
+    <string name="lbl_active">نشط</string>
+    <string name="lbl_inactive">متوقف</string>
+    <string name="lbl_drawer_desc">القائمة الجانبية</string>
+    <string name="lbl_perms_integration_status">وضع ربط صلاحيات وأدوات النظام</string>
+    <string name="lbl_require_activation">يتطلب تفعيل</string>
+    <string name="lbl_simulator_title">محاكي فحص فوري (للاختبار والتقييم)</string>
+    <string name="lbl_simulator_phone_hint">رقم هاتف تجريبي (مثال: +96777777777)</string>
+    <string name="lbl_simulator_incoming_call">محاكاة اتصال</string>
+    <string name="lbl_simulator_incoming_call_simulated">تمت محاكاة مكالمة واردة</string>
+    <string name="lbl_simulator_whatsapp">محاكاة واتساب</string>
+    <string name="lbl_simulator_whatsapp_simulated">تمت محاكاة رسالة واتساب</string>
+    <string name="lbl_number_copied">تم نسخ الرقم إلى الحافظة</string>
+    <string name="lbl_copy_desc">نسخ الرقم</string>
+    <string name="lbl_logs_title">كل عمليات الفحص والرصد الحالية</string>
+    <string name="lbl_logs_cleared">تم مسح جميع السجلات بنجاح</string>
+    <string name="lbl_export_available">العدد المتوفر للتصدير كدفعة: %1$d جهة اتصال</string>
+    <string name="lbl_no_contacts_to_export">لا توجد أية جهات اتصال محفوظة لتصديرها</string>
+    <string name="lbl_export_intent_subject">تصدير جهات اتصال CRM</string>
+    <string name="lbl_settings_granted_channels">خيارات وقنوات الالتقاط الممنوحة</string>
+    <string name="lbl_accessibility_toggle">التقاط الأرقام عبر خدمة الوصول (Accessibility)</string>
+    <string name="lbl_feedback_email_subject">اقتراح أو ملاحظة حول برنامج CRM</string>
+    <string name="lbl_email_app_not_found">لا يوجد تطبيق بريد إلكتروني منصب لتنفيذ الإجراء</string>
+    <string name="lbl_notif_settings_error">لا تتوفر إعدادات مستمع الملاحظات بالهاتف</string>
+    <string name="lbl_accessibility_settings_error">فشل فتح إعدادات إمكانية الوصول</string>
+    <string name="lbl_battery_settings_error">تعذر توجيه إعدادات البطارية المباشرة</string>
+    <string name="lbl_no_search_results">لا توجد نتائج مطابقة لعملية البحث</string>
+</resources>
