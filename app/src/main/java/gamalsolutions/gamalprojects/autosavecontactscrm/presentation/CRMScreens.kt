@@ -51,6 +51,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.launch
 import androidx.compose.ui.focus.FocusManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @Composable
 fun SplashScreen() {
@@ -469,74 +471,79 @@ fun AppMainContent(
                 drawerContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                 modifier = Modifier.width(300.dp)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Box(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.secondary
-                                )
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(20.dp)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    Column {
-                        Text(
-                            text = stringResource(R.string.app_name_ar),
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "AutoSave Contacts CRM",
-                            color = Color.White.copy(alpha = 0.8f),
-                            fontSize = 12.sp
-                        )
-                        if (!userGmail.isNullOrBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = userGmail!!,
-                                color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 11.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(
+                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.secondary
+                                    )
+                                ),
+                                shape = RoundedCornerShape(12.dp)
                             )
+                            .padding(20.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.app_name_ar),
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "AutoSave Contacts CRM",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 12.sp
+                            )
+                            if (!userGmail.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = userGmail!!,
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                val menuItems = listOf(
-                    NavigationMenuItem("home", stringResource(R.string.nav_home), Icons.Default.Dashboard),
-                    NavigationMenuItem("contacts", stringResource(R.string.nav_contacts), Icons.Default.People),
-                    NavigationMenuItem("logs", stringResource(R.string.nav_logs), Icons.Default.ListAlt),
-                    NavigationMenuItem("export", stringResource(R.string.nav_export), Icons.Default.Backup),
-                    NavigationMenuItem("settings", stringResource(R.string.nav_settings), Icons.Default.Settings),
-                    NavigationMenuItem("permissions", stringResource(R.string.nav_permissions), Icons.Default.Security),
-                    NavigationMenuItem("contact_dev", stringResource(R.string.nav_contact_dev), Icons.Default.ContactMail)
-                )
-
-                menuItems.forEach { item ->
-                    NavigationDrawerItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) },
-                        selected = currentScreen == item.route,
-                        onClick = {
-                            onScreenChange(item.route)
-                            focusManager.clearFocus()
-                            scope.launch { drawerState.close() }
-                        },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    val menuItems = listOf(
+                        NavigationMenuItem("home", stringResource(R.string.nav_home), Icons.Default.Dashboard),
+                        NavigationMenuItem("contacts", stringResource(R.string.nav_contacts), Icons.Default.People),
+                        NavigationMenuItem("logs", stringResource(R.string.nav_logs), Icons.Default.ListAlt),
+                        NavigationMenuItem("export", stringResource(R.string.nav_export), Icons.Default.Backup),
+                        NavigationMenuItem("settings", stringResource(R.string.nav_settings), Icons.Default.Settings),
+                        NavigationMenuItem("permissions", stringResource(R.string.nav_permissions), Icons.Default.Security),
+                        NavigationMenuItem("contact_dev", stringResource(R.string.nav_contact_dev), Icons.Default.ContactMail)
                     )
-                }
 
-                Spacer(modifier = Modifier.weight(1f))
+                    menuItems.forEach { item ->
+                        NavigationDrawerItem(
+                            icon = { Icon(item.icon, contentDescription = item.label) },
+                            label = { Text(item.label) },
+                            selected = currentScreen == item.route,
+                            onClick = {
+                                onScreenChange(item.route)
+                                focusManager.clearFocus()
+                                scope.launch { drawerState.close() }
+                            },
+                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
 
                 // Language and Theme Action Controls in Sidebar
                 Column(
@@ -672,6 +679,7 @@ fun AppMainContent(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                }
             }
         }
     ) {
@@ -1240,8 +1248,41 @@ fun ContactsScreen(viewModel: CRMViewModel) {
 fun LogsScreen(viewModel: CRMViewModel) {
     val context = LocalContext.current
     val logs by viewModel.logs.collectAsState()
+    val appLang by viewModel.appLanguage.collectAsState()
     
+    var selectedFilter by remember { mutableStateOf("ALL") }
+    
+    // Compute quick stats
+    val totalCount = logs.size
+    val successCount = logs.count { it.status == "SUCCESS" }
+    val ignoredCount = logs.count { it.status == "IGNORED" }
+    val errorCount = totalCount - successCount - ignoredCount
+
+    val filters = listOf(
+        Triple("ALL", "الكل", "All"),
+        Triple("CALL", "المكالمات", "Calls"),
+        Triple("SMS", "الرسائل", "SMS"),
+        Triple("WHATSAPP", "واتساب", "WhatsApp")
+    )
+
+    val filteredLogs = remember(logs, selectedFilter) {
+        if (selectedFilter == "ALL") {
+            logs
+        } else {
+            logs.filter { log ->
+                val src = log.source.uppercase()
+                when (selectedFilter) {
+                    "CALL" -> src.contains("CALL") || src.contains("PHONE")
+                    "SMS" -> src.contains("SMS")
+                    "WHATSAPP" -> src.contains("WHATSAPP") || src.contains("NOTIF")
+                    else -> true
+                }
+            }
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        // Upper Title & Action Control Row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1263,9 +1304,110 @@ fun LogsScreen(viewModel: CRMViewModel) {
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Dynamic Statistics Dashboard Cards
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Total operations captured
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "$totalCount",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = if (appLang == "ar") "إجمالي الملتقط" else "Total Logs",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Divider(modifier = Modifier.height(24.dp).width(1.dp), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+
+                // Success saves count
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "$successCount",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4CAF50)
+                    )
+                    Text(
+                        text = if (appLang == "ar") "المحفوظة" else "Saved",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Divider(modifier = Modifier.height(24.dp).width(1.dp), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+
+                // Ignored or failed count
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "${ignoredCount + errorCount}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        text = if (appLang == "ar") "المتخطاة/فشل" else "Skipped/Failed",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (logs.isEmpty()) {
+        // Horizontal Category Filtering Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            filters.forEach { filterItem ->
+                val label = if (appLang == "ar") filterItem.second else filterItem.third
+                val isSelected = selectedFilter == filterItem.first
+
+                FilledTonalButton(
+                    onClick = { selectedFilter = filterItem.first },
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    val icon = when (filterItem.first) {
+                        "CALL" -> Icons.Default.Phone
+                        "SMS" -> Icons.Default.Sms
+                        "WHATSAPP" -> Icons.Default.Message
+                        else -> Icons.Default.List
+                    }
+                    Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (filteredLogs.isEmpty()) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = stringResource(R.string.no_logs_yet),
@@ -1278,7 +1420,7 @@ fun LogsScreen(viewModel: CRMViewModel) {
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(logs) { log ->
+                items(filteredLogs) { log ->
                     val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
                     val dateStr = dateFormat.format(Date(log.timestamp))
                     
@@ -1288,68 +1430,111 @@ fun LogsScreen(viewModel: CRMViewModel) {
                         else -> Color(0xFFF44336)
                     }
 
+                    // Dynamically resolve icon and color based on the log operation source
+                    val (sourceIcon, sourceColor, sourceLabel) = when {
+                        log.source.uppercase().contains("CALL") || log.source.uppercase().contains("PHONE") -> {
+                            Triple(Icons.Default.Phone, MaterialTheme.colorScheme.primary, stringResource(R.string.log_source_call))
+                        }
+                        log.source.uppercase().contains("SMS") -> {
+                            Triple(Icons.Default.Sms, Color(0xFF00AA99), stringResource(R.string.log_source_sms))
+                        }
+                        log.source.uppercase().contains("WHATSAPP") || log.source.uppercase().contains("NOTIF") -> {
+                            Triple(Icons.Default.Message, Color(0xFF25D366), stringResource(R.string.log_source_whatsapp))
+                        }
+                        else -> {
+                            Triple(Icons.Default.Info, Color.Gray, log.source)
+                        }
+                    }
+
                     Card(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            // Circular icon signaling the operation source type
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(sourceColor.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = log.name.ifEmpty { log.phoneNumber },
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    text = log.source,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                )
-                                Text(
-                                    text = dateStr,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                Icon(
+                                    imageVector = sourceIcon,
+                                    contentDescription = null,
+                                    tint = sourceColor,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
-                            
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(log.phoneNumber, style = MaterialTheme.typography.bodyMedium)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = log.details,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                                    modifier = Modifier.weight(1f),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .background(statusColor.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    val statusText = when (log.status) {
-                                        "SUCCESS" -> stringResource(R.string.log_status_success)
-                                        "IGNORED" -> stringResource(R.string.log_status_ignored)
-                                        else -> stringResource(R.string.log_status_error)
-                                    }
                                     Text(
-                                        text = statusText,
-                                        color = statusColor,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold
+                                        text = log.name.ifEmpty { log.phoneNumber },
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
                                     )
+                                    Text(
+                                        text = dateStr,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = log.phoneNumber,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = log.details,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                        modifier = Modifier.weight(1f),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    
+                                    Box(
+                                        modifier = Modifier
+                                            .background(statusColor.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        val statusText = when (log.status) {
+                                            "SUCCESS" -> stringResource(R.string.log_status_success)
+                                            "IGNORED" -> stringResource(R.string.log_status_ignored)
+                                            else -> stringResource(R.string.log_status_error)
+                                        }
+                                        Text(
+                                            text = statusText,
+                                            color = statusColor,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1458,6 +1643,18 @@ private fun shareCsvFile(context: Context, bytes: ByteArray) {
 fun PermissionsScreen(viewModel: CRMViewModel) {
     val context = LocalContext.current
     
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        viewModel.refreshIntegrationStatuses()
+        val allGranted = results.values.all { it }
+        if (allGranted) {
+            Toast.makeText(context, "All core auto-saving permissions granted!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "Some permissions were denied.", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
     val hasKeys by viewModel.hasPermissions.collectAsState()
     val hasNotif by viewModel.hasNotificationAccess.collectAsState()
     val hasAccessib by viewModel.hasAccessibility.collectAsState()
@@ -1494,8 +1691,7 @@ fun PermissionsScreen(viewModel: CRMViewModel) {
                 desc = stringResource(R.string.perm_contacts_desc),
                 isGranted = hasKeys,
                 onRequest = {
-                    // Handled automatically via activity launcher or showing Toast guide
-                    Toast.makeText(context, "Please trigger authorization from Main Launcher screen", Toast.LENGTH_LONG).show()
+                    launcher.launch(PermissionManager.REQUIRED_PERMISSIONS.toTypedArray())
                 }
             )
         }
@@ -1602,6 +1798,21 @@ fun SettingsScreen(viewModel: CRMViewModel) {
     val autoSaveSms by viewModel.autoSaveSms.collectAsState()
     val autoSaveWhatsApp by viewModel.autoSaveWhatsApp.collectAsState()
     val namePrefix by viewModel.namePrefix.collectAsState()
+    val context = LocalContext.current
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        viewModel.refreshIntegrationStatuses()
+        val hasCalls = results[android.Manifest.permission.READ_CALL_LOG] == true || results[android.Manifest.permission.READ_PHONE_STATE] == true
+        val hasSms = results[android.Manifest.permission.RECEIVE_SMS] == true || results[android.Manifest.permission.READ_SMS] == true
+        if (hasCalls) {
+            viewModel.toggleAutoSaveCalls(true)
+        }
+        if (hasSms) {
+            viewModel.toggleAutoSaveSms(true)
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -1634,7 +1845,27 @@ fun SettingsScreen(viewModel: CRMViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(stringResource(R.string.setting_auto_save_calls))
-                        Switch(checked = autoSaveCalls, onCheckedChange = { viewModel.toggleAutoSaveCalls(it) })
+                        Switch(
+                            checked = autoSaveCalls,
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) {
+                                    val needsPermissionsByOS = listOf(
+                                        android.Manifest.permission.READ_CALL_LOG,
+                                        android.Manifest.permission.READ_PHONE_STATE,
+                                        android.Manifest.permission.READ_CONTACTS,
+                                        android.Manifest.permission.WRITE_CONTACTS
+                                    ).filter { androidx.core.content.ContextCompat.checkSelfPermission(context, it) != android.content.pm.PackageManager.PERMISSION_GRANTED }
+                                    
+                                    if (needsPermissionsByOS.isNotEmpty()) {
+                                        launcher.launch(needsPermissionsByOS.toTypedArray())
+                                    } else {
+                                        viewModel.toggleAutoSaveCalls(true)
+                                    }
+                                } else {
+                                    viewModel.toggleAutoSaveCalls(false)
+                                }
+                            }
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -1645,7 +1876,27 @@ fun SettingsScreen(viewModel: CRMViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(stringResource(R.string.setting_auto_save_sms))
-                        Switch(checked = autoSaveSms, onCheckedChange = { viewModel.toggleAutoSaveSms(it) })
+                        Switch(
+                            checked = autoSaveSms,
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) {
+                                    val needsPermissionsByOS = listOf(
+                                        android.Manifest.permission.RECEIVE_SMS,
+                                        android.Manifest.permission.READ_SMS,
+                                        android.Manifest.permission.READ_CONTACTS,
+                                        android.Manifest.permission.WRITE_CONTACTS
+                                    ).filter { androidx.core.content.ContextCompat.checkSelfPermission(context, it) != android.content.pm.PackageManager.PERMISSION_GRANTED }
+                                    
+                                    if (needsPermissionsByOS.isNotEmpty()) {
+                                        launcher.launch(needsPermissionsByOS.toTypedArray())
+                                    } else {
+                                        viewModel.toggleAutoSaveSms(true)
+                                    }
+                                } else {
+                                    viewModel.toggleAutoSaveSms(false)
+                                }
+                            }
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -1656,7 +1907,25 @@ fun SettingsScreen(viewModel: CRMViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(stringResource(R.string.setting_auto_save_whatsapp))
-                        Switch(checked = autoSaveWhatsApp, onCheckedChange = { viewModel.toggleAutoSaveWhatsApp(it) })
+                        Switch(
+                            checked = autoSaveWhatsApp,
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) {
+                                    if (!PermissionManager.isNotificationAccessGranted(context)) {
+                                        Toast.makeText(context, "الرجاء تفعيل الوصول إلى الإشعارات لتشغيل واتساب", Toast.LENGTH_LONG).show()
+                                        try {
+                                            context.startActivity(PermissionManager.getNotificationSettingsIntent())
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, context.getString(R.string.lbl_notif_settings_error), Toast.LENGTH_SHORT).show()
+                                        }
+                                    } else {
+                                        viewModel.toggleAutoSaveWhatsApp(true)
+                                    }
+                                } else {
+                                    viewModel.toggleAutoSaveWhatsApp(false)
+                                }
+                            }
+                        )
                     }
                 }
             }
@@ -1999,10 +2268,18 @@ fun ContactDeveloperScreen() {
         items(socialPlatforms) { platform ->
             SocialMediaCard(platform = platform) {
                 try {
-                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(platform.url))
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(platform.url)).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
                     context.startActivity(browserIntent)
                 } catch (e: Exception) {
-                    Toast.makeText(context, "Error: Cannot open browser link.", Toast.LENGTH_SHORT).show()
+                    try {
+                        val chooser = Intent.createChooser(Intent(Intent.ACTION_VIEW, Uri.parse(platform.url)), "Open with")
+                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(chooser)
+                    } catch (ex: Exception) {
+                        Toast.makeText(context, "Error: Cannot open browser link. Please copy and browse: ${platform.url}", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         }
