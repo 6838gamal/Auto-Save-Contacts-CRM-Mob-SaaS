@@ -53,6 +53,17 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.focus.FocusManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.content.ContextWrapper
+import android.app.Activity
+
+fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
+}
 
 @Composable
 fun SplashScreen() {
@@ -668,17 +679,19 @@ fun AppMainContent(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
                     text = stringResource(R.string.nav_version),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp),
+                        .padding(bottom = 24.dp),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                
+                Spacer(modifier = Modifier.height(56.dp))
                 }
             }
         }
@@ -1632,7 +1645,11 @@ private fun shareCsvFile(context: Context, bytes: ByteArray) {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_file)))
+        val chooser = Intent.createChooser(intent, context.getString(R.string.share_file)).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        val activity = context.findActivity() ?: context
+        activity.startActivity(chooser)
     } catch (e: Exception) {
         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
     }
@@ -1704,7 +1721,11 @@ fun PermissionsScreen(viewModel: CRMViewModel) {
                 isGranted = hasNotif,
                 onRequest = {
                     try {
-                        context.startActivity(PermissionManager.getNotificationSettingsIntent())
+                        val activity = context.findActivity() ?: context
+                        val settingsIntent = PermissionManager.getNotificationSettingsIntent().apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        activity.startActivity(settingsIntent)
                     } catch (e: Exception) {
                         Toast.makeText(context, context.getString(R.string.lbl_notif_settings_error), Toast.LENGTH_SHORT).show()
                     }
@@ -1720,7 +1741,11 @@ fun PermissionsScreen(viewModel: CRMViewModel) {
                 isGranted = hasAccessib,
                 onRequest = {
                     try {
-                        context.startActivity(PermissionManager.getAccessibilitySettingsIntent())
+                        val activity = context.findActivity() ?: context
+                        val settingsIntent = PermissionManager.getAccessibilitySettingsIntent().apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        activity.startActivity(settingsIntent)
                     } catch (e: Exception) {
                         Toast.makeText(context, context.getString(R.string.lbl_accessibility_settings_error), Toast.LENGTH_SHORT).show()
                     }
@@ -1736,7 +1761,11 @@ fun PermissionsScreen(viewModel: CRMViewModel) {
                 isGranted = hasBattery,
                 onRequest = {
                     try {
-                        context.startActivity(PermissionManager.getBatteryOptimizationSettingsIntent(context))
+                        val activity = context.findActivity() ?: context
+                        val settingsIntent = PermissionManager.getBatteryOptimizationSettingsIntent(activity).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        activity.startActivity(settingsIntent)
                     } catch (e: Exception) {
                         Toast.makeText(context, context.getString(R.string.lbl_battery_settings_error), Toast.LENGTH_SHORT).show()
                     }
@@ -1914,7 +1943,11 @@ fun SettingsScreen(viewModel: CRMViewModel) {
                                     if (!PermissionManager.isNotificationAccessGranted(context)) {
                                         Toast.makeText(context, "الرجاء تفعيل الوصول إلى الإشعارات لتشغيل واتساب", Toast.LENGTH_LONG).show()
                                         try {
-                                            context.startActivity(PermissionManager.getNotificationSettingsIntent())
+                                            val activity = context.findActivity() ?: context
+                                            val settingsIntent = PermissionManager.getNotificationSettingsIntent().apply {
+                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            }
+                                            activity.startActivity(settingsIntent)
                                         } catch (e: Exception) {
                                             Toast.makeText(context, context.getString(R.string.lbl_notif_settings_error), Toast.LENGTH_SHORT).show()
                                         }
@@ -2064,7 +2097,11 @@ fun SettingsScreen(viewModel: CRMViewModel) {
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
                                 
-                                context.startActivity(Intent.createChooser(gmailIntent, "تصدير يدوي إلى Gmail"))
+                                val chooser = Intent.createChooser(gmailIntent, "تصدير يدوي إلى Gmail").apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                val activity = context.findActivity() ?: context
+                                activity.startActivity(chooser)
                                 
                                 viewModel.insertManualBackupLog(
                                     "تم تصدير نسخة احتياطية لكامل جهات الاتصال (${contacts.size} عميل) وإرسالها يدوياً لحساب Gmail: ${userGmail ?: ""}"
@@ -2174,14 +2211,29 @@ fun ContactDeveloperScreen() {
             Button(
                 onClick = {
                     val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse("mailto:")
-                        putExtra(Intent.EXTRA_EMAIL, arrayOf("applicationsdeveloper6838@gmail.com"))
+                        data = Uri.parse("mailto:applicationsdeveloper6838@gmail.com")
                         putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.feedback_subject))
                     }
                     try {
-                        context.startActivity(Intent.createChooser(emailIntent, context.getString(R.string.btn_send_email)))
+                        val activity = context.findActivity() ?: context
+                        activity.startActivity(emailIntent)
                     } catch (e: Exception) {
-                        Toast.makeText(context, context.getString(R.string.lbl_email_app_not_found), Toast.LENGTH_SHORT).show()
+                        try {
+                            val activity = context.findActivity() ?: context
+                            val chooser = Intent.createChooser(emailIntent, context.getString(R.string.btn_send_email)).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            activity.startActivity(chooser)
+                        } catch (ex: Exception) {
+                            try {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                val clip = android.content.ClipData.newPlainText("developer_email", "applicationsdeveloper6838@gmail.com")
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(context, "لم يتم العثور على تطبيق بريد مناسب. تم نسخ البريد بنجاح لتتمكن من إرساله يدوياً!", Toast.LENGTH_LONG).show()
+                            } catch (clipboardEx: Exception) {
+                                Toast.makeText(context, context.getString(R.string.lbl_email_app_not_found), Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp).testTag("mail_dev_button")
@@ -2268,15 +2320,18 @@ fun ContactDeveloperScreen() {
         items(socialPlatforms) { platform ->
             SocialMediaCard(platform = platform) {
                 try {
+                    val activity = context.findActivity() ?: context
                     val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(platform.url)).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
-                    context.startActivity(browserIntent)
+                    activity.startActivity(browserIntent)
                 } catch (e: Exception) {
                     try {
-                        val chooser = Intent.createChooser(Intent(Intent.ACTION_VIEW, Uri.parse(platform.url)), "Open with")
-                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(chooser)
+                        val activity = context.findActivity() ?: context
+                        val chooser = Intent.createChooser(Intent(Intent.ACTION_VIEW, Uri.parse(platform.url)), "Open with").apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        activity.startActivity(chooser)
                     } catch (ex: Exception) {
                         Toast.makeText(context, "Error: Cannot open browser link. Please copy and browse: ${platform.url}", Toast.LENGTH_LONG).show()
                     }
