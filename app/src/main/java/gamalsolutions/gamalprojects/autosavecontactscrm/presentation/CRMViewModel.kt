@@ -63,6 +63,12 @@ class CRMViewModel(application: Application) : AndroidViewModel(application) {
     private val _autoGmailSync = MutableStateFlow(true)
     val autoGmailSync: StateFlow<Boolean> = _autoGmailSync.asStateFlow()
 
+    private val _appLanguage = MutableStateFlow("ar")
+    val appLanguage: StateFlow<String> = _appLanguage.asStateFlow()
+
+    private val _deviceEmails = MutableStateFlow<List<String>>(emptyList())
+    val deviceEmails: StateFlow<List<String>> = _deviceEmails.asStateFlow()
+
     init {
         refreshIntegrationStatuses()
         loadSettings()
@@ -87,6 +93,7 @@ class CRMViewModel(application: Application) : AndroidViewModel(application) {
             val email = repository.getSetting("user_gmail", "")
             _userGmail.value = if (email.isEmpty()) null else email
             _autoGmailSync.value = repository.getSetting("auto_gmail_sync", "true") == "true"
+            _appLanguage.value = repository.getSetting("app_language", "ar")
         }
     }
 
@@ -123,6 +130,32 @@ class CRMViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleAutoGmailSync(enabled: Boolean) {
         _autoGmailSync.value = enabled
         viewModelScope.launch { repository.saveSetting("auto_gmail_sync", enabled.toString()) }
+    }
+
+    fun updateAppLanguage(lang: String) {
+        _appLanguage.value = lang
+        viewModelScope.launch { repository.saveSetting("app_language", lang) }
+    }
+
+    fun loadDeviceEmails() {
+        viewModelScope.launch {
+            val app = getApplication<Application>()
+            val emails = mutableListOf<String>()
+            try {
+                val accountManager = android.accounts.AccountManager.get(app)
+                val accounts = accountManager.getAccountsByType("com.google")
+                for (account in accounts) {
+                    if (account.name.isNotBlank() && !emails.contains(account.name)) {
+                        emails.add(account.name)
+                    }
+                }
+            } catch (e: SecurityException) {
+                android.util.Log.w("CRMViewModel", "GET_ACCOUNTS permission not granted or rejected: ${e.message}")
+            } catch (e: Exception) {
+                android.util.Log.e("CRMViewModel", "Error loading device accounts: ${e.message}")
+            }
+            _deviceEmails.value = emails
+        }
     }
 
     fun importDeviceContacts(onResult: (Int, Int) -> Unit) {

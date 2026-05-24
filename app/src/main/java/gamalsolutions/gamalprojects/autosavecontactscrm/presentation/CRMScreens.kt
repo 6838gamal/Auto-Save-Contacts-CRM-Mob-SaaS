@@ -122,15 +122,30 @@ fun SplashScreen() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(viewModel: CRMViewModel, onLoginComplete: () -> Unit) {
-    var selectedEmail by remember { mutableStateOf("gamalalmaqtary6838@gmail.com") }
+    val deviceEmails by viewModel.deviceEmails.collectAsState()
+    
+    val emailsToDisplay = remember(deviceEmails) {
+        (deviceEmails + listOf(
+            "gamalalmaqtary6838@gmail.com",
+            "applicationsdeveloper6838@gmail.com"
+        )).distinct()
+    }
+
+    var selectedEmail by remember { mutableStateOf("") }
+    
+    LaunchedEffect(emailsToDisplay) {
+        if (selectedEmail.isEmpty() && emailsToDisplay.isNotEmpty()) {
+            selectedEmail = emailsToDisplay.first()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.loadDeviceEmails()
+    }
+
     var customEmail by remember { mutableStateOf("") }
     var useCustom by remember { mutableStateOf(false) }
     var errorText by remember { mutableStateOf("") }
-
-    val suggestedEmails = listOf(
-        "gamalalmaqtary6838@gmail.com",
-        "applicationsdeveloper6838@gmail.com"
-    )
 
     Box(
         modifier = Modifier
@@ -192,7 +207,7 @@ fun LoginScreen(viewModel: CRMViewModel, onLoginComplete: () -> Unit) {
                     textAlign = TextAlign.Right
                 )
 
-                suggestedEmails.forEach { email ->
+                emailsToDisplay.forEach { email ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -326,16 +341,72 @@ fun LoginScreen(viewModel: CRMViewModel, onLoginComplete: () -> Unit) {
     }
 }
 
+// Elegant Material 3 Color Schemes for AutoSave CRM Theme Modes
+private val CRMDarkColorScheme = darkColorScheme(
+    primary = Color(0xFF64B5F6),
+    onPrimary = Color(0xFF0D47A1),
+    secondary = Color(0xFF81C784),
+    onSecondary = Color(0xFF1B5E20),
+    background = Color(0xFF121212),
+    onBackground = Color(0xFFDCDCDC),
+    surface = Color(0xFF1E1E1E),
+    onSurface = Color(0xFFDCDCDC),
+    primaryContainer = Color(0xFF1565C0),
+    onPrimaryContainer = Color(0xFFE3F2FD),
+    surfaceVariant = Color(0xFF2C2C2C),
+    onSurfaceVariant = Color(0xFFB0BEC5)
+)
+
+private val CRMLightColorScheme = lightColorScheme(
+    primary = Color(0xFF1E88E5),
+    onPrimary = Color(0xFFFFFFFF),
+    secondary = Color(0xFF4CAF50),
+    onSecondary = Color(0xFFFFFFFF),
+    background = Color(0xFFF7F9FC),
+    onBackground = Color(0xFF1A1A1A),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF1A1A1A),
+    primaryContainer = Color(0xFFD2E5FA),
+    onPrimaryContainer = Color(0xFF0D47A1),
+    surfaceVariant = Color(0xFFEEF2F6),
+    onSurfaceVariant = Color(0xFF37474F)
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation(viewModel: CRMViewModel) {
     val userGmail by viewModel.userGmail.collectAsState()
-    var appPhase by remember { mutableStateOf("splash") }
+    val appLang by viewModel.appLanguage.collectAsState()
+    val appTheme by viewModel.appTheme.collectAsState()
     
+    var appPhase by remember { mutableStateOf("splash") }
     var currentScreen by remember { mutableStateOf("home") }
     val isRunning by viewModel.isServiceRunning.collectAsState()
-    val layoutDirection = LocalLayoutDirection.current
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+
+    // Dynamically apply selected app language locale
+    val context = LocalContext.current
+    val locale = remember(appLang) { Locale(appLang) }
+    val localizedContext = remember(appLang) {
+        Locale.setDefault(locale)
+        val config = android.content.res.Configuration(context.resources.configuration)
+        config.setLocale(locale)
+        context.createConfigurationContext(config)
+    }
+    val layoutDirection = remember(appLang) {
+        if (appLang == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr
+    }
+
+    // Dynamically apply selected app appearance theme
+    val systemDarkMode = androidx.compose.foundation.isSystemInDarkTheme()
+    val useDarkMode = remember(appTheme, systemDarkMode) {
+        when (appTheme) {
+            "dark" -> true
+            "light" -> false
+            else -> systemDarkMode
+        }
+    }
+    val activeColorScheme = if (useDarkMode) CRMDarkColorScheme else CRMLightColorScheme
 
     LaunchedEffect(userGmail) {
         // Give 2 seconds to splash screen loaded
@@ -343,22 +414,29 @@ fun AppNavigation(viewModel: CRMViewModel) {
         appPhase = if (userGmail.isNullOrBlank()) "login" else "main"
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    CompositionLocalProvider(
+        LocalContext provides localizedContext,
+        LocalLayoutDirection provides layoutDirection
     ) {
-        when (appPhase) {
-            "splash" -> SplashScreen()
-            "login" -> LoginScreen(viewModel = viewModel, onLoginComplete = { appPhase = "main" })
-            "main" -> {
-                AppMainContent(
-                    viewModel = viewModel,
-                    currentScreen = currentScreen,
-                    onScreenChange = { currentScreen = it },
-                    isRunning = isRunning,
-                    layoutDirection = layoutDirection,
-                    focusManager = focusManager
-                )
+        MaterialTheme(colorScheme = activeColorScheme) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                when (appPhase) {
+                    "splash" -> SplashScreen()
+                    "login" -> LoginScreen(viewModel = viewModel, onLoginComplete = { appPhase = "main" })
+                    "main" -> {
+                        AppMainContent(
+                            viewModel = viewModel,
+                            currentScreen = currentScreen,
+                            onScreenChange = { currentScreen = it },
+                            isRunning = isRunning,
+                            layoutDirection = layoutDirection,
+                            focusManager = focusManager
+                        )
+                    }
+                }
             }
         }
     }
@@ -377,6 +455,8 @@ fun AppMainContent(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val userGmail by viewModel.userGmail.collectAsState()
+    val appLang by viewModel.appLanguage.collectAsState()
+    val appTheme by viewModel.appTheme.collectAsState()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -453,12 +533,137 @@ fun AppMainContent(
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
+
+                // Language and Theme Action Controls in Sidebar
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Divider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Language Selector Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Language,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (appLang == "ar") "لغة التطبيق" else "Language",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            FilledTonalButton(
+                                onClick = { viewModel.updateAppLanguage("ar") },
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = if (appLang == "ar") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (appLang == "ar") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("عربي", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            FilledTonalButton(
+                                onClick = { viewModel.updateAppLanguage("en") },
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = if (appLang == "en") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (appLang == "en") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("EN", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Theme Selector Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = when (appTheme) {
+                                    "dark" -> Icons.Default.DarkMode
+                                    "light" -> Icons.Default.LightMode
+                                    else -> Icons.Default.SettingsSuggest
+                                },
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (appLang == "ar") "مظهر التطبيق" else "App Theme",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                            IconButton(
+                                onClick = { viewModel.updateAppTheme("light") },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = if (appTheme == "light") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (appTheme == "light") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.LightMode, contentDescription = "Light Mode", modifier = Modifier.size(16.dp))
+                            }
+
+                            IconButton(
+                                onClick = { viewModel.updateAppTheme("dark") },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = if (appTheme == "dark") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (appTheme == "dark") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.DarkMode, contentDescription = "Dark Mode", modifier = Modifier.size(16.dp))
+                            }
+
+                            IconButton(
+                                onClick = { viewModel.updateAppTheme("system") },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = if (appTheme == "system") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = if (appTheme == "system") MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.SettingsSuggest, contentDescription = "System Default", modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
                 
                 Text(
                     text = stringResource(R.string.nav_version),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(bottom = 16.dp),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
